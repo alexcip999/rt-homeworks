@@ -1,0 +1,53 @@
+@startuml diagrama-de-timp
+title Cele trei taskuri pe 10 secunde (T = 2 s, prag 28, minim 5 s între alarme)
+
+skinparam defaultFontName Arial
+
+concise "Periodic" as P
+concise "Sporadic" as S
+concise "Aperiodic" as A
+
+scale 500 as 100 pixels
+
+' joburile durează câteva ms, le desenez mai late ca să se vadă
+
+@P
+0 is job
+300 is {-}
+2000 is job
+2300 is {-}
+4000 is job
+4300 is {-}
+6000 is job
+6300 is {-}
+8000 is job
+8300 is {-}
+9000 is job
+9300 is {-}
+10000 is job
+10300 is {-}
+
+@S
+0 is {-}
+4000 is alarmă
+4300 is {-}
+6000 is respins #pink
+6300 is {-}
+10000 is alarmă
+10300 is {-}
+
+@A
+0 is {-}
+7300 is comandă
+7600 is {-}
+
+P@0 <-> @2000 : 2 s
+P@8000 <-> @9000 : 1 s
+
+legend bottom left
+  4 s: temperatura trece de prag → alarmă
+  6 s: tot peste prag, dar au trecut doar 2 s de la ultima alarmă → respins
+  7.3 s: vine SET_INTERVAL 1000 → de la 8 s jobul periodic rulează la fiecare 1 s
+  10 s: au trecut 6 s de la ultima alarmă → alarmă acceptată
+endlegend
+@enduml
