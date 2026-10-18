@@ -1,0 +1,44 @@
+@startuml diagrama-de-componente
+!pragma layout smetana
+title Componentele sistemului
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+node "Device (device-simulator)" {
+  component "Senzor\ntemperatură" as SENSOR
+  component "Task periodic\n(telemetrie)" as PERIODIC
+  component "Task sporadic\n(alarme)" as SPORADIC
+  component "Task aperiodic\n(comenzi)" as APERIODIC
+
+  SENSOR --> PERIODIC : citire
+  PERIODIC --> SPORADIC : temperatură\npeste prag
+  APERIODIC --> PERIODIC : schimbă\nperioada / pragul
+}
+
+cloud "Broker MQTT" as BROKER
+
+node "Server (business-service)" {
+  component "Procesare\nmesaje" as PROC
+  component "Salvare CSV" as CSV
+  component "Dashboard" as DASH
+  component "Consolă\ncomenzi" as CONSOLE
+  database "fișiere .csv" as FILES
+
+  PROC --> CSV
+  CSV --> FILES
+  PROC --> DASH
+}
+
+actor Operator
+
+PERIODIC --> BROKER : telemetry
+SPORADIC --> BROKER : alarm
+APERIODIC --> BROKER : status
+BROKER --> APERIODIC : commands
+
+BROKER --> PROC : telemetry, alarm, status
+CONSOLE --> BROKER : commands
+Operator --> CONSOLE
+@enduml

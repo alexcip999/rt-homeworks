@@ -1,6 +1,8 @@
 package ssatr.device;
 
+import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * TASK PERIODIC, cu perioada T = periodMs: fiecare job citește senzorul și
@@ -17,7 +19,6 @@ public class PeriodicTelemetryTask implements Runnable {
     private final MqttConnection mqtt;
     private final BlockingQueue<Double> alarmEvents;
 
-    // volatile: sunt citite aici, dar modificate de taskul aperiodic (alt thread)
     private volatile long periodMs = 2000;
     private volatile double threshold = 28.0;
 
@@ -31,22 +32,36 @@ public class PeriodicTelemetryTask implements Runnable {
 
     @Override
     public void run() {
-        // TODO 1: implementați bucla taskului periodic. Fiecare job:
-        //   - citiți temperatura: sensor.read()
-        //   - publicați pe Config.telemetryTopic(deviceId) mesajul "deviceId;timestamp;temperatura"
-        //     (timestamp = System.currentTimeMillis(); temperatura cu punct zecimal,
-        //      de ex. String.format(Locale.US, "%.2f", t), ca să poată fi citită
-        //      cu Double.parseDouble în business-service)
-        //   - dacă temperatura > threshold, puneți valoarea în coada alarmEvents
-        //
-        // Folosiți așteptare absolută, nu relativă: Thread.sleep(periodMs) după
-        // fiecare job duce la derivă (perioada reală devine T + C + întârzieri).
-        // Calculați eliberarea următorului job pe grilă (next = next + periodMs)
-        // și așteptați doar cât a mai rămas până la ea. Pentru grilă folosiți
-        // un timp monoton: System.nanoTime().
-        //
-        // periodMs se poate schimba în timpul rulării (comanda SET_INTERVAL),
-        // deci citiți-l la fiecare job.
+        long next = System.nanoTime();
+
+        for (;;) {
+            double temperature = sensor.read();
+            long timestamp = System.currentTimeMillis();
+
+            String message = deviceId + ";" + timestamp + ";"
+                    + String.format(Locale.US, "%.2f", temperature);
+
+            mqtt.publish(Config.telemetryTopic(deviceId), message);
+
+            if (temperature > threshold) {
+                alarmEvents.offer(temperature);
+            }
+
+            next += periodMs * 1_000_000L;
+
+            long sleepNs = next - System.nanoTime();
+            if (sleepNs > 0) {
+                sleepNanos(sleepNs);
+            }
+        }
+    }
+
+    private static void sleepNanos(long nanos) {
+        try {
+            TimeUnit.NANOSECONDS.sleep(nanos);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     public void setPeriodMs(long periodMs) {

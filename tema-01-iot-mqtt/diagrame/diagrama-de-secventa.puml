@@ -1,0 +1,34 @@
+@startuml diagrama-de-secventa
+title Alarmă la depășirea pragului și comanda SET_INTERVAL
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+autonumber
+
+actor Operator
+participant "Task periodic" as P
+participant "Task sporadic" as S
+participant "Task aperiodic" as A
+participant "Broker MQTT" as B
+participant "Server" as SRV
+
+== 1. Temperatura trece de prag ==
+
+P -> B : telemetry (29.31)
+B -> SRV : telemetry
+SRV -> SRV : salvează în CSV
+P -> S : 29.31 > 28.00
+S -> B : alarm (29.31)
+B -> SRV : alarm
+SRV -> SRV : afișează [ALARMA]
+
+== 2. Operatorul schimbă intervalul ==
+
+Operator -> SRV : device-1 SET_INTERVAL 1000
+SRV -> B : commands
+B -> A : SET_INTERVAL 1000
+A -> P : perioada = 1000 ms
+A -> B : status (OK)
+B -> SRV : status
+SRV -> SRV : afișează [STATUS]
+@enduml
