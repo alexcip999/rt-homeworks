@@ -27,12 +27,55 @@ public class MessageProcessor implements Runnable {
 
     @Override
     public void run() {
-        // TODO 4: într-o buclă:
-        //   - preluați un mesaj: inbox.take()
-        //   - salvați mesajul în fișierul CSV: storage.append(kind, mesaj)
-        //     (CsvStorage este gata implementată)
-        //   - actualizați dashboard-ul, în funcție de kind
-        //   - alarmele și confirmările se afișează imediat în consolă
-        //   - un mesaj greșit (format invalid) nu trebuie să oprească thread-ul
+        try {
+            for (;;) {
+                String message = inbox.take();
+
+                storage.append(kind, message);
+
+                try {
+                    dispatch(message);
+                } catch (RuntimeException e) {
+                    System.out.println("Mesaj " + kind + " invalid, ignorat: " + message);
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /** Interpretează mesajul în funcție de tipul lui (kind) și actualizează dashboard-ul. */
+    private void dispatch(String message) {
+        switch (kind) {
+            case "telemetry": {
+                String[] parts = message.split(";", 3);
+                String deviceId = parts[0];
+                long timestamp = Long.parseLong(parts[1]);
+                double temperature = Double.parseDouble(parts[2]);
+                dashboard.updateTelemetry(deviceId, timestamp, temperature);
+                break;
+            }
+            case "alarm": {
+                String[] parts = message.split(";", 4);
+                String deviceId = parts[0];
+                long timestamp = Long.parseLong(parts[1]);
+                double temperature = Double.parseDouble(parts[2]);
+                double threshold = Double.parseDouble(parts[3]);
+                dashboard.updateAlarm(deviceId, timestamp, temperature);
+                System.out.printf("[ALARMA] %s: temperatura %.2f > prag %.2f%n", deviceId, temperature, threshold);
+                break;
+            }
+            case "status": {
+                String[] parts = message.split(";", 3);
+                String deviceId = parts[0];
+                long timestamp = Long.parseLong(parts[1]);
+                String text = parts[2];
+                dashboard.touch(deviceId, timestamp);
+                System.out.printf("[STATUS] %s: %s%n", deviceId, text);
+                break;
+            }
+            default:
+                throw new IllegalStateException("tip de mesaj necunoscut: " + kind);
+        }
     }
 }
