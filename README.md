@@ -10,7 +10,7 @@ Fiecare temă se află într-un subfolder separat și conține enunțul (`README
 |-----|------|------------|
 | 01  | [Aplicație IoT cu taskuri periodice, sporadice și aperiodice](tema-01-iot-mqtt/) | Java, MQTT, diagrame UML |
 | 02  | [Device IoT pe ESP32-C3 cu taskuri FreeRTOS](tema-02-esp32-mqtt/) | ESP32-C3, Arduino, FreeRTOS, MQTT |
-| 03  | | |
+| 03  | [Semafor pentru pietoni pe ESP32-C3](tema-03-semafor-simplu/) | ESP32-C3, Arduino, FreeRTOS, MQTT, Java |
 | 04  | | |
 
 ## Tehnologii folosite
