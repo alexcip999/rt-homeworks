@@ -8,7 +8,7 @@ package ssatr.semafor;
  */
 public class Config {
 
-    public static final String STUDENT = "popescu-ion";
+    public static final String STUDENT = "constantin-alexandru";
 
     // Setările de mai jos se schimbă doar la instalarea pe serverul cursului
     // (variabile de mediu, vezi compose.yml). Local nu trebuie modificate.
