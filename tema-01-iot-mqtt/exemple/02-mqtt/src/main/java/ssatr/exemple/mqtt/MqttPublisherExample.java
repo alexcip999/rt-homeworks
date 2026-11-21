@@ -28,7 +28,7 @@ public class MqttPublisherExample {
         client.connect(options);
         System.out.println("Conectat.");
 
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 1000; i++) {
             // conținutul mesajului: text simplu
             String payload = "Salut #" + i;
 
